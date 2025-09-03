@@ -22,7 +22,7 @@ namespace OortTools.Core.Utils
 
             File.WriteAllText(path, sb.ToString(), new UTF8Encoding(true));
 
-            if (UtilitiesPrefs.CsvAutoOpen)
+            if (PreferencesPrefs.CsvAutoOpen)
             {
                 EditorUtility.RevealInFinder(path);
             }
