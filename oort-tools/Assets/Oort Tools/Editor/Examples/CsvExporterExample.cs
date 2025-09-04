@@ -30,11 +30,11 @@ public class CsvExporterExample : EditorWindow
     private void OnGUI()
     {
         EditorGUILayout.LabelField("CSV Export Example", EditorStyles.boldLabel);
-        EditorGUILayout.HelpBox("이 예제는 간단한 데이터를 CSV 파일로 내보내는 샘플입니다.", MessageType.Info);
+        EditorGUILayout.HelpBox("버튼을 누르면 아래 데이터를 CSV 파일로 내보냅니다.\n저장 후 파일 위치를 자동으로 열려면 Preference/Oort Tools에서 설정 가능합니다.", MessageType.Info);
 
         if (GUILayout.Button("Export Sample CSV", GUILayout.Height(30)))
         {
-            CsvExporter.Export("sample_result", _header, _rows);
+            CsvExporter.Export("Example", _header, _rows);
         }
 
         GUILayout.Space(10);
