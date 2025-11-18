@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.Collections.Generic;
 
 namespace OortTools.Core.Preferences
 {
@@ -34,7 +34,7 @@ namespace OortTools.Core.Preferences
             GUILayout.EndVertical();
         }
 
-        IEnumerable<string> CollectKeywords()
+        private IEnumerable<string> CollectKeywords()
         {
             foreach (var section in PreferencesRegistry.Sections)
                 foreach (var keyword in section.Keywords)

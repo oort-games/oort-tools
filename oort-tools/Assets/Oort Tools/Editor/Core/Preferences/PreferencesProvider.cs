@@ -1,6 +1,6 @@
 #if UNITY_EDITOR
-using System.Collections.Generic;
 using UnityEditor;
+using System.Collections.Generic;
 
 namespace OortTools.Core.Preferences
 {

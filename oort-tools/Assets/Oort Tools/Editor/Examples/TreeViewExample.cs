@@ -1,10 +1,9 @@
 #if UNITY_EDITOR
-using OortTools.CoreSystem.UI;
-using System.Collections.Generic;
+using UnityEngine;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
-using UnityEngine;
-using UnityEngine.UIElements;
+using System.Collections.Generic;
+using OortTools.CoreSystem.UI;
 
 public class TreeViewExample : EditorWindow
 {
@@ -37,7 +36,7 @@ public class TreeViewExample : EditorWindow
                 headerContent = new GUIContent("Score"),
                 width = 80,
                 autoResize = true
-            }
+            },
         };
         _header ??= new MultiColumnHeader(new MultiColumnHeaderState(columns));
 
@@ -66,9 +65,9 @@ public class TreeViewExample : EditorWindow
 
         var rows = new List<ExampleRow>
         {
-            new("Alice",   100),
-            new("Bob",       95),
-            new("Charlie",   88),
+            new("Alice", 100),
+            new("Bob", 95),
+            new("Charlie", 88),
         };
         _treeView.SetData(rows);
     }

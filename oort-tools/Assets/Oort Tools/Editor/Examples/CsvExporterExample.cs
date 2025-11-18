@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
-using OortTools.Core.Utils;
+using UnityEngine;
+using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
-using UnityEngine;
+using OortTools.Core.Utils;
 
 public class CsvExporterExample : EditorWindow
 {

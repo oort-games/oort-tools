@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
-using OortTools.Core.Preferences;
+using UnityEditor;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using UnityEditor;
+using OortTools.Core.Preferences;
 
 namespace OortTools.Core.Utils
 {
