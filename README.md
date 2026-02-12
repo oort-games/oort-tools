@@ -18,9 +18,9 @@ Unity Editor를 활용해 게임 제작에 필요한 다양한 기능을 제공�
 
 - Progress
 
-| Editor | 실행 결과 |
+| Popup | Background |
 | --- | --- |
-| <img width="959" height="553" alt="image" src="https://github.com/user-attachments/assets/d48d87c0-2062-48ea-ac7b-f48f69b17d1b" /> | <img width="959" height="553" alt="image" src="https://github.com/user-attachments/assets/08c6d5bf-a94c-4ebd-bc76-03e6a4eb5f1b" /> |
+| <img width="1079" height="606" alt="image" src="https://github.com/user-attachments/assets/987457c2-879a-4dae-a9e1-0fd8d6e5f5de" /> | <img width="1079" height="606" alt="image" src="https://github.com/user-attachments/assets/64d78e7e-2b1e-4ec6-bc62-e0f5ceaaadf3" /> |
 
 - TreeView
   
