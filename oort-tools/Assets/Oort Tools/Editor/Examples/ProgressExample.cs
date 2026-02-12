@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using OortTools.Core.Utils;
+using System;
 
 public class ProgressExample : EditorWindow
 {
@@ -19,7 +20,7 @@ public class ProgressExample : EditorWindow
     private void OnEnable()
     {
         _dummyTasks = new List<string>();
-        for (int i = 1; i <= 50; i++)
+        for (int i = 1; i <= 1000; i++)
             _dummyTasks.Add($"Task #{i}");
     }
 
@@ -30,12 +31,20 @@ public class ProgressExample : EditorWindow
 
         using (new EditorGUI.DisabledScope(_isRunning))
         {
-            if (GUILayout.Button("Run Task Simulation", GUILayout.Height(30)))
+            if (GUILayout.Button("Run Task Simulation #Popup", GUILayout.Height(30)))
             {
                 _isRunning = true;
                 _currentIndex = 0;
 
                 EditorApplication.update += RunTasks;
+            }
+
+            if (GUILayout.Button("Run Task Simulation #Background", GUILayout.Height(30)))
+            {
+                _isRunning = true;
+                _currentIndex = 0;
+
+                RunTasksThree();
             }
         }
     }
@@ -49,16 +58,28 @@ public class ProgressExample : EditorWindow
         }
 
         string taskName = _dummyTasks[_currentIndex];
-        float progress = (float)(_currentIndex + 1) / _dummyTasks.Count;
 
-        if (EditorProgress.Show("Progress Example", $"Processing {taskName}", progress))
+        if (EditorProgress.Show("Progress Example #2", $"Processing {taskName}", _currentIndex, _dummyTasks.Count))
         {
             FinishTasks();
             return;
         }
 
-        System.Threading.Thread.Sleep(50);
         _currentIndex++;
+    }
+
+    private void RunTasksThree()
+    {
+        List<Action> tasks = new();
+        for (int i = 0; i < _dummyTasks.Count; i++)
+        {
+            string task = _dummyTasks[i];
+            tasks.Add(() => { Debug.Log($"{task}"); });
+        }
+
+        EditorProgressBackground.Show("Progress Example #3", "Processing", tasks, 
+            ()=> { _isRunning = false; Debug.Log($"Finish"); }, 
+            () => { _isRunning = false; Debug.Log($"Cancel"); });
     }
 
     private void FinishTasks()
