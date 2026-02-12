@@ -40,24 +40,25 @@ public class TreeViewExample : EditorWindow
         };
         _header ??= new MultiColumnHeader(new MultiColumnHeaderState(columns));
 
-        _treeView = new ExampleTreeView(_treeViewState, _header);
-
-        _treeView.OnSelectionChanged = rows =>
+        _treeView = new ExampleTreeView(_treeViewState, _header)
         {
-            Debug.Log($"Selected {rows.Count} row(s)");
-        };
-        _treeView.OnDoubleClickedItem = row =>
-        {
-            Debug.Log($"DoubleClicked: {row.name} (score: {row.score})");
-        };
-        _treeView.OnContextClickedItem = row =>
-        {
-            var menu = new GenericMenu();
-            menu.AddItem(new GUIContent($"{row.name}"), false, () =>
+            OnSelectionChanged = rows =>
             {
-                Debug.Log($"ContextClicked: {row.name}");
-            });
-            menu.ShowAsContext();
+                Debug.Log($"Selected {rows.Count} row(s)");
+            },
+            OnDoubleClickedItem = row =>
+                {
+                    Debug.Log($"DoubleClicked: {row.name} (score: {row.score})");
+                },
+            OnContextClickedItem = row =>
+                {
+                    var menu = new GenericMenu();
+                    menu.AddItem(new GUIContent($"{row.name}"), false, () =>
+                    {
+                        Debug.Log($"ContextClicked: {row.name}");
+                    });
+                    menu.ShowAsContext();
+                }
         };
 
         _treeView.SetColumnComparer(0, (a, b) => string.Compare(a.name, b.name, true));

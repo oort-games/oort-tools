@@ -1,15 +1,18 @@
 #if UNITY_EDITOR
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using System.Collections.Generic;
 using OortTools.Core.Utils;
-using System;
 
 public class ProgressExample : EditorWindow
 {
     private List<string> _dummyTasks;
-    private bool _isRunning;
     private int _currentIndex;
+
+    private bool _isRunningPopup;
+    private bool _isRunningBackgroundOne;
+    private bool _isRunningBackgroundTwo;
 
     [MenuItem("Oort Tools/Examples/Progress Example")]
     public static void Open()
@@ -29,27 +32,34 @@ public class ProgressExample : EditorWindow
         EditorGUILayout.LabelField("Progress Example", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox("버튼을 누르면 ProgressBar가 표시됩니다.\nCancel을 누르면 중간에 취소됩니다.", MessageType.Info);
 
-        using (new EditorGUI.DisabledScope(_isRunning))
+        using (new EditorGUI.DisabledScope(_isRunningPopup))
         {
-            if (GUILayout.Button("Run Task Simulation #Popup", GUILayout.Height(30)))
+            if (GUILayout.Button("Run Task Simulation Popup", GUILayout.Height(30)))
             {
-                _isRunning = true;
                 _currentIndex = 0;
-
-                EditorApplication.update += RunTasks;
+                _isRunningPopup = true;
+                EditorApplication.update += RunTask;
             }
-
-            if (GUILayout.Button("Run Task Simulation #Background", GUILayout.Height(30)))
+        }
+        using (new EditorGUI.DisabledScope(_isRunningBackgroundOne))
+        {
+            if (GUILayout.Button("Run Task Simulation Background #1", GUILayout.Height(30)))
             {
-                _isRunning = true;
-                _currentIndex = 0;
-
-                RunTasksThree();
+                _isRunningBackgroundOne = true;
+                RunTaskBackgroundOne();
+            }
+        }
+        using (new EditorGUI.DisabledScope(_isRunningBackgroundTwo))
+        {
+            if (GUILayout.Button("Run Task Simulation Background #2", GUILayout.Height(30)))
+            {
+                _isRunningBackgroundTwo = true;
+                RunTaskBackgroundTwo();
             }
         }
     }
 
-    private void RunTasks()
+    private void RunTask()
     {
         if (_currentIndex >= _dummyTasks.Count)
         {
@@ -59,7 +69,7 @@ public class ProgressExample : EditorWindow
 
         string taskName = _dummyTasks[_currentIndex];
 
-        if (EditorProgress.Show("Progress Example #2", $"Processing {taskName}", _currentIndex, _dummyTasks.Count))
+        if (EditorProgress.Show("Progress Example Popup", $"Processing {taskName}", _currentIndex, _dummyTasks.Count))
         {
             FinishTasks();
             return;
@@ -68,7 +78,7 @@ public class ProgressExample : EditorWindow
         _currentIndex++;
     }
 
-    private void RunTasksThree()
+    private void RunTaskBackgroundOne()
     {
         List<Action> tasks = new();
         for (int i = 0; i < _dummyTasks.Count; i++)
@@ -77,15 +87,29 @@ public class ProgressExample : EditorWindow
             tasks.Add(() => { Debug.Log($"{task}"); });
         }
 
-        EditorProgressBackground.Show("Progress Example #3", "Processing", tasks, 
-            ()=> { _isRunning = false; Debug.Log($"Finish"); }, 
-            () => { _isRunning = false; Debug.Log($"Cancel"); });
+        new EditorBackgroundProgress("Progress Example Background #1", "Processing", tasks, 
+            ()=> { _isRunningBackgroundOne = false; Debug.Log($"Finish"); }, 
+            () => { _isRunningBackgroundOne = false; Debug.Log($"Cancel"); });
+    }
+
+    private void RunTaskBackgroundTwo()
+    {
+        List<Action> tasks = new();
+        for (int i = 0; i < _dummyTasks.Count; i++)
+        {
+            string task = _dummyTasks[i];
+            tasks.Add(() => { Debug.Log($"{task}"); });
+        }
+
+        new EditorBackgroundProgress("Progress Example Background #2", "Processing", tasks,
+            () => { _isRunningBackgroundTwo = false; Debug.Log($"Finish"); },
+            () => { _isRunningBackgroundTwo = false; Debug.Log($"Cancel"); });
     }
 
     private void FinishTasks()
     {
-        _isRunning = false;
-        EditorApplication.update -= RunTasks;
+        _isRunningPopup = false;
+        EditorApplication.update -= RunTask;
         EditorProgress.Clear();
 
         Repaint();
