@@ -19,46 +19,77 @@ namespace OortTools
             EditorGUILayout.LabelField("Task Example", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox("미완성 입니다.", MessageType.Info);
 
-            if (GUILayout.Button("Run Task Simulation Popup", GUILayout.Height(30)))
+            if (GUILayout.Button("Run Task Simulation", GUILayout.Height(30)))
             {
-                EditorTaskScheduler.Enqueue(new ExampleTask("#1", 10));
-                EditorTaskScheduler.Enqueue(new ExampleTask("#2", 20));
+                RunExample();
             }
+
+            if (GUILayout.Button("Run Two Roots (Parallel)", GUILayout.Height(30)))
+            {
+                RunParallelExample();
+            }
+        }
+
+        void RunExample()
+        {
+            var root = new RootExampleTask();
+
+            root.AddChild(new ExampleTask("A", 3));
+            root.AddChild(new ExampleTask("B", 5));
+            root.AddChild(new ExampleTask("C", 2));
+
+            EditorTaskRunner.Start(root);
+        }
+
+        void RunParallelExample()
+        {
+            var root1 = new RootExampleTask();
+            root1.AddChild(new ExampleTask("Root1-A", 3));
+
+            var root2 = new RootExampleTask();
+            root2.AddChild(new ExampleTask("Root2-B", 5));
+
+            EditorTaskRunner.Start(root1);
+            EditorTaskRunner.Start(root2);
+        }
+    }
+
+    public class RootExampleTask : EditorTask
+    {
+        protected override IEnumerator ExecuteTask()
+        {
+            Debug.Log("[Root] Start");
+            yield return null;
         }
     }
 
     public class ExampleTask : EditorTask
     {
-        public override string DisplayName => $"Example Task {_name}";
-        public override int Priority => _priority;
-
         readonly string _name;
-        readonly int _priority;
+        readonly int _steps;
 
-        public ExampleTask(string name, int priority)
+        public override string DisplayName => _name;
+
+        public ExampleTask(string name, int steps)
         {
             _name = name;
-            _priority = priority;
+            _steps = steps;
         }
 
-        public override IEnumerator Execute()
+        protected override IEnumerator ExecuteTask()
         {
-            try
-            {
-                for (int i = 0; i < 1000; i++)
-                {
-                    if (CheckCanceled())
-                        yield break;
+            Debug.Log($"[{_name}] Start");
 
-                    Debug.Log($"Example Task {_name} : {i}");
-                    EditorProgress.Show($"Example Task {_name}", $"# {i}", i, 1000);
-                    yield return null;
-                }
-            }
-            finally
+            for (int i = 1; i <= _steps; i++)
             {
-                EditorProgress.Clear();
+                if (State == EditorTaskState.Canceled)
+                    yield break;
+
+                Debug.Log($"[{_name}] Step {i}/{_steps}");
+                yield return null;
             }
+
+            Debug.Log($"[{_name}] End");
         }
     }
 }

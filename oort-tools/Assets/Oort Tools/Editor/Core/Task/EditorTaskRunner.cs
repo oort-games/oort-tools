@@ -1,55 +1,51 @@
 #if UNITY_EDITOR
 using System;
-using System.Collections;
-using UnityEngine;
+using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 
 namespace OortTools
 {
     public static class EditorTaskRunner
     {
-        static IEnumerator _routine;
+        static readonly List<EditorTaskExecution> _running = new();
+        static bool _isSubscribed;
 
         public static void Start(IEditorTask task)
         {
             if (task == null)
                 return;
 
-            _routine = task.Execute();
+            _running.Add(new EditorTaskExecution(task.Execute()));
 
-            EditorApplication.update -= Update;
-            EditorApplication.update += Update;            
+            if (!_isSubscribed)
+            {
+                EditorApplication.update += Update;
+                _isSubscribed = true;
+            }
         }
 
         static void Update()
         {
-            if (_routine == null)
-                return;
-
-            bool hasNext;
-
-            try
+            for (int i = _running.Count - 1; i >= 0; i--)
             {
-                hasNext = _routine.MoveNext();
+                try
+                {
+                    if (!_running[i].MoveNext())
+                        _running.RemoveAt(i);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                    _running.RemoveAt(i);
+                }
             }
-            catch (Exception e)
+
+            if (_running.Count == 0)
             {
-                Debug.LogException(e);
-                hasNext = false;
+                EditorApplication.update -= Update;
+                _isSubscribed = false;
             }
-
-            if (!hasNext)
-            {
-                Stop();
-            }
-        }
-
-        static void Stop()
-        {
-            EditorApplication.update -= Update;
-            _routine = null;
-
-            EditorTaskScheduler.NotifyTaskFinished();
         }
     }
 }

@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections;
 
 namespace OortTools
@@ -8,11 +9,11 @@ namespace OortTools
         string DisplayName { get; }
         int Priority { get; }
 
-        bool IsCanceled { get; }
-
-        void Cancel();
+        EditorTaskState State { get; }
+        event Action<EditorTaskState> OnStateChanged;
 
         IEnumerator Execute();
+        void Cancel();
     }
 }
 #endif
