@@ -27,3 +27,9 @@ Unity Editor를 활용해 게임 제작에 필요한 다양한 기능을 제공�
 | Editor | 정렬 | 검색 |
 | --- | --- | --- |
 | <img width="959" height="553" alt="image" src="https://github.com/user-attachments/assets/02b30b8a-326a-4ed2-8aee-385116725571" /> | <img width="959" height="553" alt="image" src="https://github.com/user-attachments/assets/bc6536e9-3d70-4fa3-815a-0f726108c094" /> | <img width="959" height="553" alt="image" src="https://github.com/user-attachments/assets/8e34150b-d91f-49d9-a974-393879a24ff8" /> |
+
+- Task
+
+| Sequential | Parallel | Nested |
+| --- | --- | ---|
+| <img width="1103" height="699" alt="image" src="https://github.com/user-attachments/assets/a2c1c8ac-9020-4766-ab11-cd9087cac9dc" /> | <img width="1103" height="699" alt="image" src="https://github.com/user-attachments/assets/2f783a7c-4f79-4102-a5df-3d274253fe33" /> | <img width="1103" height="699" alt="image" src="https://github.com/user-attachments/assets/10398545-f45d-436a-b465-5ed942d740de" /> |
