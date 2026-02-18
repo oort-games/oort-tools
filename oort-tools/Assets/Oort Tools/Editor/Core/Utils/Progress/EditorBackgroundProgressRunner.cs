@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 
-namespace OortTools.Core.Utils
+namespace OortTools
 {
     [InitializeOnLoad]
     public static class EditorBackgroundProgressRunner
@@ -11,10 +11,7 @@ namespace OortTools.Core.Utils
 
         static bool _isSubscribed;
 
-        static EditorBackgroundProgressRunner()
-        {
-
-        }
+        static EditorBackgroundProgressRunner() { }
 
         public static void Register(EditorBackgroundProgress progress)
         {

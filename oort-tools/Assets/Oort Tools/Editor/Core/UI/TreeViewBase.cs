@@ -5,7 +5,7 @@ using UnityEditor.IMGUI.Controls;
 using System;
 using System.Collections.Generic;
 
-namespace OortTools.CoreSystem.UI
+namespace OortTools
 {
     public abstract class TreeViewBase<TRow> : TreeView where TRow : class
     {

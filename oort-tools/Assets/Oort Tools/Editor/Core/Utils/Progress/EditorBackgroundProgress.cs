@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace OortTools.Core.Utils
+namespace OortTools
 {
     public class EditorBackgroundProgress : IDisposable
     {

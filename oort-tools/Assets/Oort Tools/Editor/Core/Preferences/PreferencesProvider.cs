@@ -2,7 +2,7 @@
 using UnityEditor;
 using System.Collections.Generic;
 
-namespace OortTools.Core.Preferences
+namespace OortTools
 {
     internal class PreferencesProvider
     {

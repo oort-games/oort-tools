@@ -1,11 +1,11 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 
-namespace OortTools.Core.Preferences
+namespace OortTools
 {
     public static class PreferencesRegistry 
     {
-        private static readonly List<IPreferencesSection> _sections = new();
+        static readonly List<IPreferencesSection> _sections = new();
         public static void Register(IPreferencesSection section)
         {
             if (section != null && !_sections.Contains(section)) _sections.Add(section);

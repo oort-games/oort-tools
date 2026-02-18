@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 
-namespace OortTools.Core.Preferences
+namespace OortTools
 {
     public interface IPreferencesSection
     {

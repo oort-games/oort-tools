@@ -2,7 +2,7 @@
 using UnityEditor;
 using System.Collections.Generic;
 
-namespace OortTools.Core.Preferences
+namespace OortTools
 {
     [InitializeOnLoad]
     public class CsvExporterPreferencesSection : IPreferencesSection

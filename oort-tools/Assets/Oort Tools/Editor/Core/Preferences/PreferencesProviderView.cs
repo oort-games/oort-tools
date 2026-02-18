@@ -3,15 +3,15 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
-namespace OortTools.Core.Preferences
+namespace OortTools
 {
     public class PreferencesProviderView : SettingsProvider
     {
-        private const string PATH = "Preferences/Oort Tools";
-        private const string TITLE = "Oort Tools";
-        private const float LABEL_WIDTH = 250f;
+        const string PATH = "Preferences/Oort Tools";
+        const string TITLE = "Oort Tools";
+        const float LABEL_WIDTH = 250f;
 
-        private readonly GUIStyle marginStyle = new () { margin = new RectOffset(10, 10, 10, 10) };
+        readonly GUIStyle marginStyle = new () { margin = new RectOffset(10, 10, 10, 10) };
 
         public PreferencesProviderView() : base (PATH, SettingsScope.User)
         {
@@ -34,7 +34,7 @@ namespace OortTools.Core.Preferences
             GUILayout.EndVertical();
         }
 
-        private IEnumerable<string> CollectKeywords()
+        IEnumerable<string> CollectKeywords()
         {
             foreach (var section in PreferencesRegistry.Sections)
                 foreach (var keyword in section.Keywords)

@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
 
-namespace OortTools.Core.Preferences
+namespace OortTools
 {
     public static class PreferencesPrefs
     {

@@ -4,9 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using OortTools.Core.Preferences;
 
-namespace OortTools.Core.Utils
+namespace OortTools
 {
     public static class CsvExporter
     {
