@@ -20,6 +20,17 @@ namespace OortTools
         public IReadOnlyList<EditorTask> Child => _child;
 
         bool _isCanceled;
+        bool _isPaused;
+        public bool IsPaused => _isPaused;
+
+        float _progress;
+        public float Progress => _progress;
+
+        string _subMessage;
+        public string SubMessage => _subMessage;
+
+        double _startTime;
+        public double ElapsedTime => EditorApplication.timeSinceStartup - _startTime;
 
         protected void SetState(EditorTaskState state)
         {
@@ -73,6 +84,7 @@ namespace OortTools
             }
 
             SetState(EditorTaskState.Running);
+            _startTime = EditorApplication.timeSinceStartup;
 
             IEnumerator routine;
 
@@ -94,6 +106,12 @@ namespace OortTools
                     if (_isCanceled)
                     {
                         yield break;
+                    }
+
+                    if (_isPaused)
+                    {
+                        yield return null;
+                        continue;
                     }
 
                     bool hasNext;
@@ -122,6 +140,9 @@ namespace OortTools
                 {
                     yield break;
                 }
+
+                while (child.State == EditorTaskState.Paused)
+                    yield return null;
 
                 yield return child.Execute();
 
@@ -158,7 +179,45 @@ namespace OortTools
             }
         }
 
+        public void Pause()
+        {
+            if (State != EditorTaskState.Running)
+                return;
+
+            _isPaused = true;
+            SetState(EditorTaskState.Paused);
+
+            foreach (var child in _child)
+            {
+                child.Pause();
+            }    
+        }
+
+        public void Resume()
+        {
+            if (State != EditorTaskState.Paused)
+                return;
+
+            _isPaused = false;
+            SetState(EditorTaskState.Running);
+
+            foreach (var child in _child)
+            {
+                child.Resume();
+            }
+        }
+
         protected abstract IEnumerator ExecuteTask();
+
+        protected void SetProgress(float value)
+        {
+            _progress = Mathf.Clamp01(value);
+        }
+
+        protected void SetSubMessage(string message)
+        {
+            _subMessage = message;
+        }
     }
 }
 #endif

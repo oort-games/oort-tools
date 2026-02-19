@@ -8,15 +8,20 @@ namespace OortTools
 {
     public static class EditorTaskRunner
     {
-        static readonly List<EditorTaskExecution> _running = new();
+        static readonly List<IEditorTask> _runningTasks = new();
+        static readonly List<EditorTaskExecution> _executions = new();
+
         static bool _isSubscribed;
+
+        public static IReadOnlyList<IEditorTask> RunningTasks => _runningTasks;
 
         public static void Start(IEditorTask task)
         {
             if (task == null)
                 return;
 
-            _running.Add(new EditorTaskExecution(task.Execute()));
+            _runningTasks.Add(task);
+            _executions.Add(new EditorTaskExecution(task.Execute()));
 
             if (!_isSubscribed)
             {
@@ -27,25 +32,38 @@ namespace OortTools
 
         static void Update()
         {
-            for (int i = _running.Count - 1; i >= 0; i--)
+            for (int i = _executions.Count - 1; i >= 0; i--)
             {
+                if (_runningTasks[i].State == EditorTaskState.Paused)
+                    continue;
+
                 try
                 {
-                    if (!_running[i].MoveNext())
-                        _running.RemoveAt(i);
+                    if (!_executions[i].MoveNext())
+                    {
+                        _runningTasks.RemoveAt(i);
+                        _executions.RemoveAt(i);
+                    }
                 }
                 catch (Exception e)
                 {
                     Debug.LogException(e);
-                    _running.RemoveAt(i);
+                    _runningTasks.RemoveAt(i);
+                    _executions.RemoveAt(i);
                 }
             }
 
-            if (_running.Count == 0)
+            if (_executions.Count == 0)
             {
                 EditorApplication.update -= Update;
                 _isSubscribed = false;
             }
+        }
+
+        public static void CancelAll()
+        {
+            for (int i = 0; i < _runningTasks.Count; i++)
+                _runningTasks[i]?.Cancel();
         }
     }
 }

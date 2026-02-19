@@ -43,9 +43,9 @@ namespace OortTools
         {
             var root = new RootExampleTask("RunExample");
 
-            root.AddChild(new ExampleTask("A", 3));
-            root.AddChild(new ExampleTask("B", 5));
-            root.AddChild(new ExampleTask("C", 2));
+            root.AddChild(new ExampleTask("A", 300));
+            root.AddChild(new ExampleTask("B", 500));
+            root.AddChild(new ExampleTask("C", 200));
 
             EditorTaskRunner.Start(root);
         }
@@ -53,10 +53,10 @@ namespace OortTools
         void RunParallelExample()
         {
             var root1 = new RootExampleTask("RunParallelExample #1");
-            root1.AddChild(new ExampleTask("Root1-A", 3));
+            root1.AddChild(new ExampleTask("Root1-A", 300));
 
             var root2 = new RootExampleTask("RunParallelExample #2");
-            root2.AddChild(new ExampleTask("Root2-B", 5));
+            root2.AddChild(new ExampleTask("Root2-B", 500));
 
             EditorTaskRunner.Start(root1);
             EditorTaskRunner.Start(root2);
@@ -103,6 +103,8 @@ namespace OortTools
                 if (State == EditorTaskState.Canceled)
                     yield break;
 
+                SetProgress((float)i/ _steps);
+                SetSubMessage($"Processing {i}/{_steps}");
                 Debug.Log($"[{Parent.DisplayName}][{_name}] Step {i}/{_steps}");
                 yield return null;
             }

@@ -13,7 +13,10 @@ namespace OortTools
         event Action<EditorTaskState> OnStateChanged;
 
         IEnumerator Execute();
+        
         void Cancel();
+        void Pause();
+        void Resume();
     }
 }
 #endif

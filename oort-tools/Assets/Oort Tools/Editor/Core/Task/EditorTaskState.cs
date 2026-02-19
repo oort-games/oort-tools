@@ -7,6 +7,7 @@ namespace OortTools
     {
         Queued,
         Running,
+        Paused,
         Completed,
         Canceled,
         Failed
