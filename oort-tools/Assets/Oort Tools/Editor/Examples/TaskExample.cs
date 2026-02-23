@@ -37,14 +37,29 @@ namespace OortTools
             {
                 EditorTaskRunner.Start(new ExampleNestedTask());
             }
+
+            GUILayout.Space(10);
+            if (GUILayout.Button("Open Editor Task Window", GUILayout.Height(30)))
+            {
+                EditorTaskWindow.Open();
+            }
         }
 
         void RunExample()
         {
             var root = new RootExampleTask("RunExample");
 
-            root.AddChild(new ExampleTask("A", 300));
-            root.AddChild(new ExampleTask("B", 500));
+            var rootA = new RootExampleTask("A");
+            rootA.AddChild(new ExampleTask("A #1", 100));
+            rootA.AddChild(new ExampleTask("A #2", 200));
+            rootA.AddChild(new ExampleTask("A #3", 300));
+
+            var rootB = new RootExampleTask("B");
+            rootB.AddChild(new ExampleTask("B #1", 100));
+            rootB.AddChild(new ExampleTask("B #2", 200));
+
+            root.AddChild(rootA);
+            root.AddChild(rootB);
             root.AddChild(new ExampleTask("C", 200));
 
             EditorTaskRunner.Start(root);
@@ -56,7 +71,7 @@ namespace OortTools
             root1.AddChild(new ExampleTask("Root1-A", 300));
 
             var root2 = new RootExampleTask("RunParallelExample #2");
-            root2.AddChild(new ExampleTask("Root2-B", 500));
+            root2.AddChild(new ExampleTask("Root2-A", 500));
 
             EditorTaskRunner.Start(root1);
             EditorTaskRunner.Start(root2);
@@ -72,6 +87,32 @@ namespace OortTools
         public RootExampleTask(string name)
         {
             _name = name;
+
+            OnStateChanged += TaskOnStateChanged;
+        }
+
+        private void TaskOnStateChanged(EditorTaskState state)
+        {
+            switch (state)
+            {
+                case EditorTaskState.Queued:
+                    break;
+                case EditorTaskState.Running:
+                    Debug.Log($"[{_name}] Running");
+                    break;
+                case EditorTaskState.Paused:
+                    Debug.Log($"[{_name}] Paused");
+                    break;
+                case EditorTaskState.Completed:
+                    Debug.Log($"[{_name}] Completed");
+                    break;
+                case EditorTaskState.Canceled:
+                    Debug.Log($"[{_name}] Canceled");
+                    break;
+                case EditorTaskState.Failed:
+                    Debug.Log($"[{_name}] Failed");
+                    break;
+            }
         }
 
         protected override IEnumerator ExecuteTask()

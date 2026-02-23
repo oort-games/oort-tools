@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace OortTools
 {
-    public static class EditorBackgroundTasksWindow
+    public static class EditorBackgroundTaskWindow
     {
         public static void Open()
         {

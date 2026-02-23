@@ -74,7 +74,7 @@ namespace OortTools
                 GUILayout.Space(10);
                 if (GUILayout.Button("Open Background Tasks Window", GUILayout.Height(30)))
                 {
-                    EditorBackgroundTasksWindow.Open();
+                    EditorBackgroundTaskWindow.Open();
                 }
             }
             EditorGUILayout.EndVertical();
