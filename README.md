@@ -36,4 +36,6 @@ Unity Editor를 활용해 게임 제작에 필요한 다양한 기능을 제공�
 
 | Task Window |
 | --- |
-| <img width="1916" height="954" alt="image" src="https://github.com/user-attachments/assets/f8ce484d-ca87-486a-9187-9d0a0cca4c24" /> |
+| <img width="1920" height="927" alt="image" src="https://github.com/user-attachments/assets/2dfe0ccc-32ca-4958-a95c-b4ca2bcc48da" /> |
+
+https://github.com/user-attachments/assets/bca7556f-2c7d-4ea9-86a9-fa8e350b8cb6
