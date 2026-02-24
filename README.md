@@ -33,3 +33,7 @@ Unity Editor를 활용해 게임 제작에 필요한 다양한 기능을 제공�
 | Sequential | Parallel | Nested |
 | --- | --- | ---|
 | <img width="1103" height="699" alt="image" src="https://github.com/user-attachments/assets/a2c1c8ac-9020-4766-ab11-cd9087cac9dc" /> | <img width="1103" height="699" alt="image" src="https://github.com/user-attachments/assets/2f783a7c-4f79-4102-a5df-3d274253fe33" /> | <img width="1103" height="699" alt="image" src="https://github.com/user-attachments/assets/10398545-f45d-436a-b465-5ed942d740de" /> |
+
+| Task Window |
+| --- |
+| <img width="1916" height="954" alt="image" src="https://github.com/user-attachments/assets/f8ce484d-ca87-486a-9187-9d0a0cca4c24" /> |
