@@ -1,8 +1,9 @@
 #if UNITY_EDITOR
-using UnityEngine;
+using System.Collections;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
-using System.Collections;
+using UnityEngine;
 
 namespace OortTools
 {
@@ -173,7 +174,11 @@ namespace OortTools
         IEnumerator C(string parent)
         {
             Debug.Log($"[Start] {parent} - C");
-            yield return null;
+            float start = (float)EditorApplication.timeSinceStartup;
+            while (EditorApplication.timeSinceStartup < start + 1f)
+            {
+                yield return null;
+            }
             Debug.Log($"[End] {parent} - C");
         }
     }

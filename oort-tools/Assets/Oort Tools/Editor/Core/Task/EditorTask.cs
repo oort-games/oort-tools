@@ -29,13 +29,35 @@ namespace OortTools
         string _subMessage;
         public string SubMessage => _subMessage;
 
-        double _startTime;
-        public double ElapsedTime => EditorApplication.timeSinceStartup - _startTime;
+        double _accumulatedTime;
+        double _lastResumeTime;
+
+        public double ElapsedTime
+        {
+            get
+            {
+                if (State == EditorTaskState.Running)
+                {
+                    return _accumulatedTime + (EditorApplication.timeSinceStartup - _lastResumeTime);
+                }
+                return _accumulatedTime;
+            }
+        }
 
         protected void SetState(EditorTaskState state)
         {
             if (State == state)
                 return;
+
+            if (State == EditorTaskState.Running)
+            {
+                _accumulatedTime += EditorApplication.timeSinceStartup - _lastResumeTime;
+            }
+
+            if (state == EditorTaskState.Running && State == EditorTaskState.Queued)
+            {
+                _lastResumeTime = EditorApplication.timeSinceStartup;
+            }
 
             State = state;
             OnStateChanged?.Invoke(state);
@@ -84,7 +106,6 @@ namespace OortTools
             }
 
             SetState(EditorTaskState.Running);
-            _startTime = EditorApplication.timeSinceStartup;
 
             IEnumerator routine;
 
@@ -199,6 +220,7 @@ namespace OortTools
                 return;
 
             _isPaused = false;
+            _lastResumeTime = EditorApplication.timeSinceStartup;
             SetState(EditorTaskState.Running);
 
             foreach (var child in _child)

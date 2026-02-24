@@ -35,7 +35,7 @@ namespace OortTools
             rootVisualElement.Clear();
             rootVisualElement.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f);
 
-            // --- HEADER SECTION ---
+            #region Header
             var header = new VisualElement();
             header.style.paddingLeft = 15;
             header.style.paddingRight = 15;
@@ -64,8 +64,9 @@ namespace OortTools
             header.Add(titleLabel);
             header.Add(cancelAllBtn);
             rootVisualElement.Add(header);
+            #endregion
 
-            // --- SCROLL SECTION ---
+            #region Scroll
             _scroll = new ScrollView();
             _scroll.style.flexGrow = 1;
             _scroll.style.paddingTop = 10;
@@ -73,6 +74,7 @@ namespace OortTools
             _scroll.style.paddingLeft = 10;
             _scroll.style.paddingRight = 10;
             rootVisualElement.Add(_scroll);
+            #endregion
         }
 
         void RefreshUI()
@@ -146,7 +148,7 @@ namespace OortTools
                 _isRootTask = _editorTask?.Parent == null;
                 _hasChild = _editorTask?.Child?.Count > 0;
 
-                // --- ROOT CARD ---
+                #region Root
                 Root = new VisualElement();
                 Root.style.marginLeft = depth > 0 ? 12 : 0;
                 Root.style.marginBottom = 8;
@@ -161,8 +163,9 @@ namespace OortTools
                 Root.style.borderBottomLeftRadius = 5;
                 Root.style.borderTopRightRadius = 5;
                 Root.style.borderBottomRightRadius = 5;
+                #endregion
 
-                // --- TOP ROW (Status + Title + Buttons) ---
+                #region TopRow
                 var topRow = new VisualElement();
                 topRow.style.flexDirection = FlexDirection.Row;
                 topRow.style.alignItems = Align.Center;
@@ -194,22 +197,17 @@ namespace OortTools
 
                 if (_isRootTask)
                 {
-                    // Button Group
                     var btnGroup = new VisualElement();
                     btnGroup.style.flexDirection = FlexDirection.Row;
 
-                    _btnPause = CreateIconButton("Ⅱ", "Pause", () =>
-                    {
-                        _editorTask?.Pause();
-                    });
-                    _btnResume = CreateIconButton("▶", "Resume", () =>
-                    {
-                        _editorTask?.Resume();
-                    });
-                    _btnCancel = CreateIconButton("✕", "Cancel", () =>
-                    {
-                        task.Cancel();
-                    }, true);
+                    _btnPause = CreateIconButton("d_PauseButton", "Pause",
+                        () => _editorTask?.Pause(), new Color(0.25f, 0.25f, 0.25f));
+
+                    _btnResume = CreateIconButton("d_PlayButton", "Resume",
+                        () => _editorTask?.Resume(), new Color(0.25f, 0.25f, 0.25f));
+
+                    _btnCancel = CreateIconButton("d_clear", "Cancel",
+                        () => task.Cancel(), new Color(0.3f, 0.15f, 0.15f));
 
                     btnGroup.Add(_btnPause);
                     btnGroup.Add(_btnResume);
@@ -219,49 +217,53 @@ namespace OortTools
                 }
 
                 Root.Add(topRow);
+                #endregion
 
-                // --- SUB MESSAGE ---
+                #region Sub
                 _sub = new Label("");
                 _sub.style.fontSize = 10;
                 _sub.style.color = new Color(0.6f, 0.6f, 0.6f);
                 _sub.style.marginTop = 2;
                 _sub.style.marginBottom = 4;
                 _sub.style.paddingLeft = 16;
-                Root.Add(_sub);
 
-                // --- PROGRESS BAR ---
+                Root.Add(_sub);
+                #endregion
+
+                #region Progress
                 _progress = new ProgressBar { lowValue = 0, highValue = 100 };
                 _progress.style.height = 6;
                 _progress.style.marginTop = 2;
-                // UI Toolkit ProgressBar 스타일 커스텀 (슬림 디자인)
-                var progressBg = _progress.GetProgressBarBackground();
-                if (progressBg != null) progressBg.style.backgroundColor = new Color(0.12f, 0.12f, 0.12f);
 
                 Root.Add(_progress);
+                #endregion
 
-                // --- CHILD CONTAINER ---
+                #region Child
                 _childContainer = new VisualElement();
                 _childContainer.style.marginTop = 6;
                 Root.Add(_childContainer);
+                #endregion
             }
 
-            Button CreateIconButton(string text, string tooltip, System.Action onClick, bool isWarning = false)
+            Button CreateIconButton(string iconName, string tooltip, System.Action onClick, Color bgColor)
             {
+                var icon = EditorGUIUtility.IconContent(iconName)?.image as Texture2D;
+
                 var btn = new Button(onClick)
                 {
-                    text = text,
                     tooltip = tooltip,
+                    iconImage = icon,
                     pickingMode = PickingMode.Position
                 };
+
                 btn.style.width = 24;
-                btn.style.height = 20;
-                btn.style.paddingLeft = 0;
-                btn.style.paddingRight = 0;
+                btn.style.height = 24;
                 btn.style.marginLeft = 2;
                 btn.style.marginRight = 0;
-                btn.style.fontSize = 10;
-                btn.style.backgroundColor = isWarning ? new Color(0.3f, 0.15f, 0.15f) : new Color(0.25f, 0.25f, 0.25f);
-                if (isWarning) btn.style.color = new Color(1f, 0.4f, 0.4f);
+                btn.style.paddingLeft = 0;
+                btn.style.paddingRight = 0;
+                btn.style.backgroundColor = bgColor;
+
                 return btn;
             }
 
@@ -273,9 +275,11 @@ namespace OortTools
 
                 if (_editorTask == null) return;
 
+                string subText = "";
+
                 if (!_hasChild)
                 {
-                    _sub.text = _editorTask.SubMessage;
+                    subText = _editorTask.SubMessage;
                 }
                 else
                 {
@@ -284,23 +288,34 @@ namespace OortTools
 
                     if (allWaiting)
                     {
-                        _sub.text = $"{_editorTask.DisplayName} Waiting...";
+                        subText = $"{_editorTask.DisplayName} Waiting...";
                     }
                     else if (allCompleted)
                     {
-                        _sub.text = $"{_editorTask.DisplayName} Completed!";
+                        subText = $"{_editorTask.DisplayName} Completed!";
                     }
                     else
                     {
                         var currentRunningTask = _editorTask.Child.FirstOrDefault(c => c.State == EditorTaskState.Running || c.State == EditorTaskState.Paused);
                         if (currentRunningTask != null)
                         {
-                            _sub.text = $"{currentRunningTask.DisplayName} {currentRunningTask.State}";
+                            subText = $"{currentRunningTask.DisplayName} {currentRunningTask.State}";
                         }
                     }
                 }
 
-                // State handling
+                double totalElapsed = GetAggregatedElapsedTime();
+                string timeStr = totalElapsed.ToString("F1") + "s";
+
+                if (!string.IsNullOrEmpty(subText))
+                {
+                    _sub.text = subText + "  •  " + timeStr;
+                }
+                else
+                {
+                    _sub.text = timeStr;
+                }
+
                 var state = _editorTask.State;
                 _statusDot.style.backgroundColor = state switch
                 {
@@ -327,7 +342,7 @@ namespace OortTools
                 return totalCount > 0 ? totalProgress / totalCount : 0f;
             }
 
-            private (float progressSum, int count) CalculateProgressRecursive(EditorTask task)
+            (float progressSum, int count) CalculateProgressRecursive(EditorTask task)
             {
                 if (task == null) return (0f, 0);
 
@@ -347,6 +362,33 @@ namespace OortTools
                 }
 
                 return (sum, cnt);
+            }
+
+            double GetAggregatedElapsedTime()
+            {
+                if (_editorTask == null) return 0.0;
+
+                return CalculateElapsedRecursive(_editorTask);
+            }
+
+            double CalculateElapsedRecursive(EditorTask task)
+            {
+                if (task == null) return 0.0;
+
+                double total = 0.0;
+
+                if (task.Child != null && task.Child.Count > 0)
+                {
+                    foreach (var child in task.Child.OfType<EditorTask>())
+                    {
+                        total += CalculateElapsedRecursive(child);
+                    }
+                }
+                else
+                {
+                    total += task.ElapsedTime;
+                }
+                return total;
             }
         }
     }
