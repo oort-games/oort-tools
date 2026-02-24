@@ -1,14 +1,19 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEditor;
-using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
 namespace OortTools
 {
     public class TaskExample : EditorWindow
     {
+        public bool isRunningSequential;
+        public bool isRunningParallel;
+        public bool isRunningParallelOne;
+        public bool isRunningParallelTwo;
+        public bool isRunningNested;
+
         [MenuItem("Oort Tools/Examples/Task Example")]
         public static void Open()
         {
@@ -24,19 +29,37 @@ namespace OortTools
                 "Run Task (Nested Coroutine) : Nested IEnumerator 스택 처리",
                 MessageType.Info);
 
-            if (GUILayout.Button("Run Task (Sequential)", GUILayout.Height(30)))
+            using (new EditorGUI.DisabledScope(isRunningSequential))
             {
-                RunExample();
+                if (GUILayout.Button("Run Task (Sequential)", GUILayout.Height(30)))
+                {
+                    isRunningSequential = true;
+                    RunExample();
+                }
             }
 
-            if (GUILayout.Button("Run Task (Parallel Roots)", GUILayout.Height(30)))
+            using (new EditorGUI.DisabledScope(isRunningParallel))
             {
-                RunParallelExample();
+                if (GUILayout.Button("Run Task (Parallel Roots)", GUILayout.Height(30)))
+                {
+                    isRunningParallel = true;
+                    isRunningParallelOne = true;
+                    isRunningParallelTwo = true;
+                    RunParallelExample();
+                }
             }
 
-            if (GUILayout.Button("Run Task (Nested Coroutine)", GUILayout.Height(30)))
+            using (new EditorGUI.DisabledScope(isRunningNested))
             {
-                EditorTaskRunner.Start(new ExampleNestedTask());
+                if (GUILayout.Button("Run Task (Nested Coroutine)", GUILayout.Height(30)))
+                {
+                    isRunningNested = true;
+                    EditorTaskRunner.Start(new ExampleNestedTask(() => 
+                    { 
+                        isRunningNested = false;
+                        Repaint();
+                    }));
+                }
             }
 
             GUILayout.Space(10);
@@ -48,7 +71,11 @@ namespace OortTools
 
         void RunExample()
         {
-            var root = new RootExampleTask("RunExample");
+            var root = new RootExampleTask("RunExample", () => 
+            {
+                isRunningSequential = false; 
+                Repaint();
+            });
 
             var rootA = new RootExampleTask("A");
             rootA.AddChild(new ExampleTask("A #1", 100));
@@ -68,58 +95,67 @@ namespace OortTools
 
         void RunParallelExample()
         {
-            var root1 = new RootExampleTask("RunParallelExample #1");
+            var root1 = new RootExampleTask("RunParallelExample #1", () => 
+            {
+                isRunningParallelOne = false;
+                CheckEndParallelExample(); 
+            });
             root1.AddChild(new ExampleTask("Root1-A", 300));
 
-            var root2 = new RootExampleTask("RunParallelExample #2");
+            var root2 = new RootExampleTask("RunParallelExample #2", () => 
+            { 
+                isRunningParallelTwo = false;
+                CheckEndParallelExample(); 
+            });
             root2.AddChild(new ExampleTask("Root2-A", 500));
 
             EditorTaskRunner.Start(root1);
             EditorTaskRunner.Start(root2);
+        }
+
+        void CheckEndParallelExample()
+        {
+            if (isRunningParallelOne == false && isRunningParallelTwo == false)
+            {
+                isRunningParallel = false;
+                Repaint();
+            }
         }
     }
 
     public class RootExampleTask : EditorTask
     {
         readonly string _name;
+        readonly Action _onFinish;
 
         public override string DisplayName => _name;
 
-        public RootExampleTask(string name)
+        public RootExampleTask(string name, Action onFinish = null)
         {
             _name = name;
 
+            _onFinish = onFinish;
             OnStateChanged += TaskOnStateChanged;
-        }
-
-        private void TaskOnStateChanged(EditorTaskState state)
-        {
-            switch (state)
-            {
-                case EditorTaskState.Queued:
-                    break;
-                case EditorTaskState.Running:
-                    Debug.Log($"[{_name}] Running");
-                    break;
-                case EditorTaskState.Paused:
-                    Debug.Log($"[{_name}] Paused");
-                    break;
-                case EditorTaskState.Completed:
-                    Debug.Log($"[{_name}] Completed");
-                    break;
-                case EditorTaskState.Canceled:
-                    Debug.Log($"[{_name}] Canceled");
-                    break;
-                case EditorTaskState.Failed:
-                    Debug.Log($"[{_name}] Failed");
-                    break;
-            }
         }
 
         protected override IEnumerator ExecuteTask()
         {
             Debug.Log($"[{_name}] Start");
             yield return null;
+        }
+
+        void TaskOnStateChanged(EditorTaskState state)
+        {
+            Debug.Log($"[{_name}] {state}");
+            switch (state)
+            {
+                case EditorTaskState.Completed:
+                case EditorTaskState.Canceled:
+                case EditorTaskState.Failed:
+                    Debug.Log($"[{_name}] {state}");
+                    _onFinish?.Invoke();
+                    break;
+            }
         }
     }
 
@@ -157,9 +193,23 @@ namespace OortTools
 
     public class ExampleNestedTask : EditorTask
     {
+        readonly Action _onFinish;
+
+        public ExampleNestedTask(Action onFinish = null)
+        {
+            _onFinish = onFinish;
+            OnStateChanged += TaskOnStateChanged;
+        }
+
         protected override IEnumerator ExecuteTask()
         {
             Debug.Log("[Start] A");
+            float start = (float)EditorApplication.timeSinceStartup;
+            while (EditorApplication.timeSinceStartup < start + 1f)
+            {
+                yield return null;
+            }
+            SetProgress(1 / 3f);
             yield return B("A");
             Debug.Log("[End] A");
         }
@@ -167,19 +217,38 @@ namespace OortTools
         IEnumerator B(string parent)
         {
             Debug.Log($"[Start] {parent} - B");
+            float start = (float)EditorApplication.timeSinceStartup;
+            while (EditorApplication.timeSinceStartup < start + 1f)
+            {
+                yield return null;
+            }
+            SetProgress(2 / 3f);
             yield return C($"{parent} - B");
             Debug.Log($"[End] {parent} - B");
         }
 
         IEnumerator C(string parent)
         {
-            Debug.Log($"[Start] {parent} - C");
+            Debug.Log($"[Start] {parent} - C");            
             float start = (float)EditorApplication.timeSinceStartup;
             while (EditorApplication.timeSinceStartup < start + 1f)
             {
                 yield return null;
             }
+            SetProgress(1);
             Debug.Log($"[End] {parent} - C");
+        }
+
+        void TaskOnStateChanged(EditorTaskState state)
+        {
+            switch (state)
+            {
+                case EditorTaskState.Completed:
+                case EditorTaskState.Canceled:
+                case EditorTaskState.Failed:
+                    _onFinish?.Invoke();
+                    break;
+            }
         }
     }
 

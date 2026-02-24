@@ -109,8 +109,8 @@ namespace OortTools
             }
 
             new EditorBackgroundProgress("Progress Example Background #1", "Processing", tasks,
-                () => { _isRunningBackgroundOne = false; Debug.Log($"Finish"); },
-                () => { _isRunningBackgroundOne = false; Debug.Log($"Cancel"); });
+                () => { _isRunningBackgroundOne = false; Debug.Log($"Finish"); Repaint(); },
+                () => { _isRunningBackgroundOne = false; Debug.Log($"Cancel"); Repaint(); });
         }
 
         void RunTaskBackgroundTwo()
@@ -123,8 +123,8 @@ namespace OortTools
             }
 
             new EditorBackgroundProgress("Progress Example Background #2", "Processing", tasks,
-                () => { _isRunningBackgroundTwo = false; Debug.Log($"Finish"); },
-                () => { _isRunningBackgroundTwo = false; Debug.Log($"Cancel"); });
+                () => { _isRunningBackgroundTwo = false; Debug.Log($"Finish"); Repaint(); },
+                () => { _isRunningBackgroundTwo = false; Debug.Log($"Cancel"); Repaint(); });
         }
 
         void FinishTasks()

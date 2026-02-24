@@ -16,8 +16,9 @@ namespace OortTools
             window.minSize = new Vector2(350, 500);
         }
 
-        ScrollView _scroll;
         readonly Dictionary<IEditorTask, TaskVisualElement> _taskVisualElements = new();
+
+        ScrollView _scroll;
 
         void OnEnable()
         {
@@ -53,17 +54,31 @@ namespace OortTools
             titleLabel.style.flexGrow = 1;
             titleLabel.style.color = new Color(0.9f, 0.9f, 0.9f);
 
-            var cancelAllBtn = new Button(() => EditorTaskRunner.CancelAll()) { text = "Stop All Tasks" };
-            cancelAllBtn.style.backgroundColor = new Color(0.7f, 0.2f, 0.2f);
-            cancelAllBtn.style.color = Color.white;
-            cancelAllBtn.style.borderTopLeftRadius = 4;
-            cancelAllBtn.style.borderBottomLeftRadius = 4;
-            cancelAllBtn.style.paddingLeft = 10;
-            cancelAllBtn.style.paddingRight = 10;
-
             header.Add(titleLabel);
-            header.Add(cancelAllBtn);
             rootVisualElement.Add(header);
+            #endregion
+
+            #region Sub Header
+            var subHeader = new VisualElement();
+            subHeader.style.flexDirection = FlexDirection.Row;
+            subHeader.style.marginTop = 8;
+            subHeader.style.justifyContent = Justify.FlexEnd;
+
+            var clearAllBtn = new Button(() =>
+            {
+                EditorTaskRunner.ClearAll();
+                RefreshUI();
+            })
+            { text = "Clear All" };
+            clearAllBtn.style.marginLeft = 10;
+
+            var cancelAllBtn = new Button(() => EditorTaskRunner.CancelAll()) { text = "Cancel All" };
+            cancelAllBtn.style.backgroundColor = new Color(0.7f, 0.2f, 0.2f);
+
+            subHeader.Add(clearAllBtn);
+            subHeader.Add(cancelAllBtn);
+
+            rootVisualElement.Add(subHeader);
             #endregion
 
             #region Scroll
@@ -81,9 +96,8 @@ namespace OortTools
         {
             if (_scroll == null) return;
 
-            var currentTasks = EditorTaskRunner.RunningTasks.ToList();
+            var currentTasks = EditorTaskRunner.HistoryTasks.ToList();
 
-            // Cleanup removed tasks
             var toRemove = _taskVisualElements.Keys.Where(t => !currentTasks.Contains(t)).ToList();
             foreach (var task in toRemove)
             {
@@ -122,24 +136,30 @@ namespace OortTools
         class TaskVisualElement
         {
             public VisualElement Root;
+
+            readonly VisualElement _childContainer;
             public VisualElement ChildContainer => _childContainer;
 
             readonly Label _title;
-            readonly Label _percent;
             readonly Label _sub;
-            readonly ProgressBar _progress;
+            readonly Label _percent;
+
             readonly VisualElement _statusDot;
 
+            readonly Button _btnFold;
             readonly Button _btnPause;
             readonly Button _btnResume;
             readonly Button _btnCancel;
+            readonly Button _btnClear;
 
-            readonly VisualElement _childContainer;
+            readonly ProgressBar _progress;
+
             readonly IEditorTask _task;
             readonly EditorTask _editorTask;
 
             readonly bool _isRootTask;
             readonly bool _hasChild;
+            bool _isExpanded = true;
 
             public TaskVisualElement(IEditorTask task, int depth)
             {
@@ -169,6 +189,20 @@ namespace OortTools
                 var topRow = new VisualElement();
                 topRow.style.flexDirection = FlexDirection.Row;
                 topRow.style.alignItems = Align.Center;
+
+                if (_isRootTask && _hasChild)
+                {
+                    _btnFold = CreateIconButton(
+                        _isExpanded ? "d_IN_foldout_on" : "d_IN_foldout",
+                        _isExpanded ? "Collapse children" : "Expand children",
+                        ToggleFold,
+                        Color.clear
+                        );
+                    _btnFold.style.width = 16;
+                    _btnFold.style.height = 16;
+                    _btnFold.style.marginRight = 4;
+                    topRow.Add(_btnFold);
+                }
 
                 _statusDot = new VisualElement();
                 _statusDot.style.width = 8;
@@ -209,9 +243,13 @@ namespace OortTools
                     _btnCancel = CreateIconButton("d_clear", "Cancel",
                         () => task.Cancel(), new Color(0.3f, 0.15f, 0.15f));
 
+                    _btnClear = CreateIconButton("d_TreeEditor.Trash", "Clear",
+                        () => EditorTaskRunner.Clear(task), new Color(0.25f, 0.25f, 0.25f));
+
                     btnGroup.Add(_btnPause);
                     btnGroup.Add(_btnResume);
                     btnGroup.Add(_btnCancel);
+                    btnGroup.Add(_btnClear);
 
                     topRow.Add(btnGroup);
                 }
@@ -243,28 +281,6 @@ namespace OortTools
                 _childContainer.style.marginTop = 6;
                 Root.Add(_childContainer);
                 #endregion
-            }
-
-            Button CreateIconButton(string iconName, string tooltip, System.Action onClick, Color bgColor)
-            {
-                var icon = EditorGUIUtility.IconContent(iconName)?.image as Texture2D;
-
-                var btn = new Button(onClick)
-                {
-                    tooltip = tooltip,
-                    iconImage = icon,
-                    pickingMode = PickingMode.Position
-                };
-
-                btn.style.width = 24;
-                btn.style.height = 24;
-                btn.style.marginLeft = 2;
-                btn.style.marginRight = 0;
-                btn.style.paddingLeft = 0;
-                btn.style.paddingRight = 0;
-                btn.style.backgroundColor = bgColor;
-
-                return btn;
             }
 
             public void Update()
@@ -331,7 +347,30 @@ namespace OortTools
                     _btnPause.style.display = (state == EditorTaskState.Running) ? DisplayStyle.Flex : DisplayStyle.None;
                     _btnResume.style.display = (state == EditorTaskState.Paused) ? DisplayStyle.Flex : DisplayStyle.None;
                     _btnCancel.style.display = (state != EditorTaskState.Completed && state != EditorTaskState.Failed) ? DisplayStyle.Flex : DisplayStyle.None;
+                    _btnClear.style.display = (state == EditorTaskState.Completed || state == EditorTaskState.Failed) ? DisplayStyle.Flex : DisplayStyle.None;
                 }
+            }
+
+            Button CreateIconButton(string iconName, string tooltip, System.Action onClick, Color bgColor)
+            {
+                var icon = EditorGUIUtility.IconContent(iconName)?.image as Texture2D;
+
+                var btn = new Button(onClick)
+                {
+                    tooltip = tooltip,
+                    iconImage = icon,
+                    pickingMode = PickingMode.Position
+                };
+
+                btn.style.width = 24;
+                btn.style.height = 24;
+                btn.style.marginLeft = 2;
+                btn.style.marginRight = 0;
+                btn.style.paddingLeft = 0;
+                btn.style.paddingRight = 0;
+                btn.style.backgroundColor = bgColor;
+
+                return btn;
             }
 
             float GetAggregatedProgress()
@@ -389,6 +428,24 @@ namespace OortTools
                     total += task.ElapsedTime;
                 }
                 return total;
+            }
+
+            void ToggleFold()
+            {
+                _isExpanded = !_isExpanded;
+
+                if (_btnFold != null)
+                {
+                    var iconName = _isExpanded ? "d_IN_foldout_on" : "d_IN_foldout";
+                    var icon = EditorGUIUtility.IconContent(iconName)?.image as Texture2D;
+                    _btnFold.iconImage = icon;
+                    _btnFold.tooltip = _isExpanded ? "Collapse children" : "Expand children";
+                }
+
+                if (_childContainer != null)
+                {
+                    _childContainer.style.display = _isExpanded ? DisplayStyle.Flex : DisplayStyle.None;
+                }
             }
         }
     }

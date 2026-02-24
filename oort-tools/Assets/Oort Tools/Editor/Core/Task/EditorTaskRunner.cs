@@ -11,9 +11,12 @@ namespace OortTools
         static readonly List<IEditorTask> _runningTasks = new();
         static readonly List<EditorTaskExecution> _executions = new();
 
+        static readonly List<IEditorTask> _historyTasks = new();
+
         static bool _isSubscribed;
 
         public static IReadOnlyList<IEditorTask> RunningTasks => _runningTasks;
+        public static IReadOnlyList<IEditorTask> HistoryTasks => _historyTasks;
 
         public static void Start(IEditorTask task)
         {
@@ -21,6 +24,7 @@ namespace OortTools
                 return;
 
             _runningTasks.Add(task);
+            _historyTasks.Add(task);
             _executions.Add(new EditorTaskExecution(task.Execute()));
 
             if (!_isSubscribed)
@@ -34,13 +38,18 @@ namespace OortTools
         {
             for (int i = _executions.Count - 1; i >= 0; i--)
             {
-                if (_runningTasks[i].State == EditorTaskState.Paused)
+                var task = _runningTasks[i];
+                if (task.State == EditorTaskState.Paused)
                     continue;
 
                 try
                 {
                     if (!_executions[i].MoveNext())
                     {
+                        if (task.State == EditorTaskState.Canceled)
+                        {
+                            _historyTasks.Remove(task);
+                        }
                         _runningTasks.RemoveAt(i);
                         _executions.RemoveAt(i);
                     }
@@ -64,6 +73,22 @@ namespace OortTools
         {
             for (int i = 0; i < _runningTasks.Count; i++)
                 _runningTasks[i]?.Cancel();
+        }
+
+        public static void ClearAll()
+        {
+            for (int i = _historyTasks.Count - 1; i >= 0; i--)
+            {
+                var state = _historyTasks[i].State;
+                if (state == EditorTaskState.Completed ||
+                    state == EditorTaskState.Failed)
+                    _historyTasks.RemoveAt(i);
+            }
+        }
+
+        public static void Clear(IEditorTask task)
+        {
+            _historyTasks.Remove(task);
         }
     }
 }
