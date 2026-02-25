@@ -9,7 +9,7 @@ namespace OortTools
 {
     public class EditorTaskWindow : EditorWindow
     {
-        [MenuItem("Oort Tools/Editor Tasks")]
+        [MenuItem("Oort Tools/Core/Editor Tasks", false, 2)]
         public static void Open()
         {
             var window = GetWindow<EditorTaskWindow>("Editor Tasks");
