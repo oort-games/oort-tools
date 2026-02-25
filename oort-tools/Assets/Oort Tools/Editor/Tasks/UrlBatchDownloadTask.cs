@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -11,24 +12,24 @@ namespace OortTools
     public class UrlBatchDownloadTask : EditorTask
     {
         readonly List<string> _urls;
-
         readonly string _saveFolderPath;
         readonly string _baseName;
         readonly string _defaultExtension;
-
         readonly bool _useOriginalFileName;
 
         UnityWebRequest _currentRequest;
 
+        bool _refreshPending = false;
+        readonly object _fileNameLock = new();
+
         public override string DisplayName => "URL Batch Downloader";
 
-        public UrlBatchDownloadTask(List<string> urls, string saveFolderPath, string baseName, string defaultExtension, bool useOriginalFileName)
+        public UrlBatchDownloadTask(List<string> urls, string saveFolderPath, string baseName, string defaultExtension, bool useOriginalFileName = false)
         {
             _urls = urls ?? new List<string>();
             _saveFolderPath = saveFolderPath;
             _baseName = string.IsNullOrEmpty(baseName) ? "DownloadedFile" : baseName;
             _defaultExtension = defaultExtension;
-
             _useOriginalFileName = useOriginalFileName;
 
             if (!Directory.Exists(_saveFolderPath))
@@ -37,9 +38,7 @@ namespace OortTools
             OnStateChanged += state =>
             {
                 if (state == EditorTaskState.Canceled)
-                {
                     AbortCurrentRequest();
-                }
             };
         }
 
@@ -56,15 +55,17 @@ namespace OortTools
 
             for (int i = 0; i < _urls.Count; i++)
             {
-                if (State == EditorTaskState.Canceled) yield break;
-                while (State == EditorTaskState.Paused) yield return null;
+                if (State == EditorTaskState.Canceled)
+                    yield break;
+
+                while (State == EditorTaskState.Paused)
+                    yield return null;
 
                 string url = _urls[i];
-
                 string fileName = GetUniqueFileName(url);
                 string fullPath = Path.Combine(_saveFolderPath, fileName);
 
-                SetSubMessage($"[{i + 1}/{_urls.Count}] 다운로드 중: {fileName}");
+                SetSubMessage($"[{i + 1}/{_urls.Count}] {fileName}");
 
                 bool success = false;
                 yield return DownloadFile(url, fullPath, s => success = s);
@@ -76,47 +77,70 @@ namespace OortTools
             }
 
             SetProgress(1f);
-            SetSubMessage($"완료! (성공: {successCount}, 실패: {failCount})");
+            SetSubMessage($"완료! 성공: {successCount}, 실패: {failCount}");
 
             if (_saveFolderPath.StartsWith(Application.dataPath))
-                AssetDatabase.Refresh();
+            {
+                if (!_refreshPending)
+                {
+                    _refreshPending = true;
+                    EditorApplication.delayCall += () =>
+                    {
+                        AssetDatabase.Refresh();
+                        _refreshPending = false;
+                    };
+                }
+            }
         }
 
         private IEnumerator DownloadFile(string url, string savePath, System.Action<bool> onFinished)
         {
             _currentRequest = UnityWebRequest.Get(url);
             _currentRequest.timeout = 60;
-
-            _currentRequest.SetRequestHeader("User-Agent", "Mozilla/5.0");
+            _currentRequest.SetRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
 
             yield return _currentRequest.SendWebRequest();
-            while (!_currentRequest.isDone) yield return null;
+
+            while (_currentRequest != null && !_currentRequest.isDone)
+            {
+                if (State == EditorTaskState.Canceled)
+                {
+                    onFinished?.Invoke(false);
+                    yield break;
+                }
+                yield return null;
+            }
 
             bool success = false;
 
-            if (_currentRequest.result == UnityWebRequest.Result.Success)
+            if (_currentRequest != null)
             {
-                try
+                if (_currentRequest.result == UnityWebRequest.Result.Success)
                 {
-                    File.WriteAllBytes(savePath, _currentRequest.downloadHandler.data);
-                    success = true;
+                    try
+                    {
+                        File.WriteAllBytes(savePath, _currentRequest.downloadHandler.data);
+                        Debug.Log($"저장 완료: {savePath}");
+                        success = true;
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"파일 저장 실패: {savePath} → {ex.Message}");
+                    }
                 }
-                catch (System.Exception ex)
+                else
                 {
-                    Debug.LogError($"[Write Fail] {savePath}: {ex.Message}");
+                    Debug.LogError($"다운로드 실패 - URL: {url} | Result: {_currentRequest.result} | Code: {_currentRequest.responseCode} | Error: '{_currentRequest.error}'");
                 }
-            }
-            else
-            {
-                Debug.LogError($"[Fail] Result: {_currentRequest.result} | Code: {_currentRequest.responseCode} | URL: {url}");
+
+                _currentRequest.Dispose();
+                _currentRequest = null;
             }
 
             onFinished?.Invoke(success);
-            _currentRequest.Dispose();
-            _currentRequest = null;
         }
 
-        void AbortCurrentRequest()
+        private void AbortCurrentRequest()
         {
             if (_currentRequest != null)
             {
@@ -126,29 +150,23 @@ namespace OortTools
             }
         }
 
-        string GetUniqueFileName(string url)
+        private string GetUniqueFileName(string url)
         {
-            string cleanUrl = url.Split('?')[0];
-            string originalFileName = Path.GetFileNameWithoutExtension(cleanUrl);
-            string extension = Path.GetExtension(cleanUrl);
-
-            if (string.IsNullOrEmpty(extension)) extension = _defaultExtension;
-            if (string.IsNullOrEmpty(originalFileName)) originalFileName = "file";
-
-            string saveFileName;
-
-            if (string.IsNullOrEmpty(_baseName))
+            lock (_fileNameLock)
             {
-                saveFileName = originalFileName;
-            }
-            else
-            {
-                saveFileName = _useOriginalFileName
-                    ? $"{_baseName}_{originalFileName}"
+                string cleanUrl = url.Split('?')[0];
+                string originalName = Path.GetFileNameWithoutExtension(cleanUrl);
+                string ext = Path.GetExtension(cleanUrl);
+
+                if (string.IsNullOrEmpty(ext)) ext = _defaultExtension;
+                if (string.IsNullOrEmpty(originalName)) originalName = "file";
+
+                string baseFileName = _useOriginalFileName
+                    ? $"{_baseName}_{originalName}"
                     : _baseName;
-            }
 
-            return PathUtility.GetUniqueFileName(_saveFolderPath, saveFileName, extension);
+                return PathUtility.GetUniqueFileName(_saveFolderPath, baseFileName, ext);
+            }
         }
     }
 }
