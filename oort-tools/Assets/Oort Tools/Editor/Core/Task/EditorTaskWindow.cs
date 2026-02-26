@@ -47,6 +47,7 @@ namespace OortTools
             header.style.borderBottomColor = new Color(0.1f, 0.1f, 0.1f);
             header.style.flexDirection = FlexDirection.Row;
             header.style.alignItems = Align.Center;
+            header.style.marginBottom = 8;
 
             var titleLabel = new Label("Editor Tasks");
             titleLabel.style.fontSize = 18;
@@ -61,7 +62,6 @@ namespace OortTools
             #region Sub Header
             var subHeader = new VisualElement();
             subHeader.style.flexDirection = FlexDirection.Row;
-            subHeader.style.marginTop = 8;
             subHeader.style.justifyContent = Justify.FlexEnd;
 
             var clearAllBtn = new Button(() =>

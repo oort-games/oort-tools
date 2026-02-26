@@ -11,6 +11,8 @@ namespace OortTools
 {
     public class UrlBatchDownloadTask : EditorTask
     {
+        readonly string _name;
+
         readonly List<string> _urls;
         readonly string _saveFolderPath;
         readonly string _baseName;
@@ -22,10 +24,12 @@ namespace OortTools
         bool _refreshPending = false;
         readonly object _fileNameLock = new();
 
-        public override string DisplayName => "URL Batch Downloader";
+        public override string DisplayName => _name;
 
-        public UrlBatchDownloadTask(List<string> urls, string saveFolderPath, string baseName, string defaultExtension, bool useOriginalFileName = false)
+        public UrlBatchDownloadTask(string name, List<string> urls, string saveFolderPath, string baseName, string defaultExtension, bool useOriginalFileName = false)
         {
+            _name = name;
+
             _urls = urls ?? new List<string>();
             _saveFolderPath = saveFolderPath;
             _baseName = string.IsNullOrEmpty(baseName) ? "DownloadedFile" : baseName;
