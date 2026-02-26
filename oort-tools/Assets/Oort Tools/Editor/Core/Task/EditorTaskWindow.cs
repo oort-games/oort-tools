@@ -34,29 +34,11 @@ namespace OortTools
         void CreateUI()
         {
             rootVisualElement.Clear();
-            rootVisualElement.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f);
+            OortVisualElement.ApplyStyles(rootVisualElement);
+            OortVisualElement.ApplyRootStyle(rootVisualElement);
 
             #region Header
-            var header = new VisualElement();
-            header.style.paddingLeft = 15;
-            header.style.paddingRight = 15;
-            header.style.paddingTop = 15;
-            header.style.paddingBottom = 15;
-            header.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f);
-            header.style.borderBottomWidth = 1;
-            header.style.borderBottomColor = new Color(0.1f, 0.1f, 0.1f);
-            header.style.flexDirection = FlexDirection.Row;
-            header.style.alignItems = Align.Center;
-            header.style.marginBottom = 8;
-
-            var titleLabel = new Label("Editor Tasks");
-            titleLabel.style.fontSize = 18;
-            titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            titleLabel.style.flexGrow = 1;
-            titleLabel.style.color = new Color(0.9f, 0.9f, 0.9f);
-
-            header.Add(titleLabel);
-            rootVisualElement.Add(header);
+            rootVisualElement.Add(OortVisualElement.CreateHeader("Editor Tasks"));
             #endregion
 
             #region Sub Header

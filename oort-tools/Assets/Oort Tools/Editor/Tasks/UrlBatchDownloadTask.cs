@@ -22,7 +22,9 @@ namespace OortTools
         UnityWebRequest _currentRequest;
 
         bool _refreshPending = false;
-        readonly object _fileNameLock = new();
+
+        static readonly object _fileNameLock = new();
+        static readonly HashSet<string> _reservedPath = new();
 
         public override string DisplayName => _name;
 
@@ -74,6 +76,8 @@ namespace OortTools
                 bool success = false;
                 yield return DownloadFile(url, fullPath, s => success = s);
 
+                ReleaseReservedPath(fullPath);
+
                 if (success) successCount++;
                 else failCount++;
 
@@ -97,7 +101,7 @@ namespace OortTools
             }
         }
 
-        private IEnumerator DownloadFile(string url, string savePath, System.Action<bool> onFinished)
+        IEnumerator DownloadFile(string url, string savePath, System.Action<bool> onFinished)
         {
             _currentRequest = UnityWebRequest.Get(url);
             _currentRequest.timeout = 60;
@@ -144,7 +148,7 @@ namespace OortTools
             onFinished?.Invoke(success);
         }
 
-        private void AbortCurrentRequest()
+        void AbortCurrentRequest()
         {
             if (_currentRequest != null)
             {
@@ -154,7 +158,7 @@ namespace OortTools
             }
         }
 
-        private string GetUniqueFileName(string url)
+        string GetUniqueFileName(string url)
         {
             lock (_fileNameLock)
             {
@@ -169,7 +173,22 @@ namespace OortTools
                     ? $"{_baseName}_{originalName}"
                     : _baseName;
 
-                return PathUtility.GetUniqueFileName(_saveFolderPath, baseFileName, ext);
+                string uniqueFileName = PathUtility.GetUniqueFileName(_saveFolderPath, baseFileName, ext, _reservedPath);
+                string fullPath = Path.Combine(_saveFolderPath, uniqueFileName);
+                _reservedPath.Add(fullPath);
+
+                return uniqueFileName;
+            }
+        }
+
+        void ReleaseReservedPath(string path)
+        {
+            lock (_fileNameLock)
+            {
+                if (_reservedPath.Contains(path))
+                {
+                    _reservedPath.Remove(path);
+                }
             }
         }
     }

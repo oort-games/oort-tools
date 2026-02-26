@@ -1,0 +1,25 @@
+.root {
+    background-color: rgb(38, 38, 38);
+}
+
+.header {
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+
+    background-color: rgb(51, 51, 51);
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(25, 25, 25);
+
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.header-title {
+    font-size: 18px;
+    -unity-font-style: bold;
+    flex-grow: 1;
+    color: rgb(230, 230, 230);
+}
